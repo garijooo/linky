@@ -1,0 +1,5 @@
+Application setup - 2h
+Implement url shortening tool - 2h
+Develop API endpoints - 2h
+Create HTML page - 3h
+Testing and adding tests - 4h
