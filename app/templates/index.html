@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Linky</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        font-family: "Roboto", sans-serif;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        background-color: #fcba03;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        width: 80%;
+        max-width: 450px;
+        border-radius: 8px;
+        background-color: #fff;
+        padding: 24px;
+        gap: 16px;
+        box-shadow: 0 0 16px #bdac2a;
+      }
+
+      label {
+        font-size: 28px;
+        font-weight: 400;
+      }
+
+      input {
+        font-size: 20px;
+        border-radius: 8px;
+        border: 1px solid #4d4d4d;
+        padding: 12px 16px;
+        outline-color: #595001;
+        flex-grow: 1;
+      }
+
+      .full-link-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .shortened-link-wrapper {
+        display: flex;
+        gap: 8px;
+      }
+
+      .shortened-link {
+        flex-grow: 1;
+        user-select: none;
+        cursor: pointer;
+      }
+
+      button {
+        padding: 12px;
+        font-size: 20px;
+        background-color: #595001;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:active {
+        background-color: #696015;
+      }
+
+      .copy-button {
+        display: none;
+        width: 120px;
+      }
+
+      .error {
+        color: #a81414;
+        font-size: 16px;
+      }
+    </style>
+    <script>
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        const errorElem = document.getElementsByClassName("error")[0];
+        errorElem.innerText = "";
+        const fullLink = event.target.elements["full-link"].value;
+        try {
+          const response = await fetch("/shorten-link", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json;charset=utf-8",
+            },
+            body: JSON.stringify({ fullLink }),
+          });
+
+          const result = await response.json();
+          if ("error" in result) {
+            throw new Error(result.error);
+          }
+          const shortenedLinkElem = document.querySelector(
+            "[name='shortened-link']"
+          );
+          shortenedLinkElem.value = result.short_link;
+
+          const copyButtonElem =
+            document.getElementsByClassName("copy-button")[0];
+          copyButtonElem.style.display = "block";
+        } catch (error) {
+          console.error(error);
+          errorElem.innerText = error.message;
+        }
+      }
+
+      function copyShortenedLink() {
+        const shortenedLinkElem = document.querySelector(
+          "[name='shortened-link']"
+        );
+        const copyButtonElem =
+          document.getElementsByClassName("copy-button")[0];
+
+        if (shortenedLinkElem.value && !copyButtonElem.disabled) {
+          navigator.clipboard.writeText(shortenedLinkElem.value);
+
+          copyButtonElem.innerText = "Copied!";
+          copyButtonElem.disabled = true;
+          setTimeout(function () {
+            copyButtonElem.innerText = "Copy Link";
+            copyButtonElem.disabled = false;
+          }, 2000);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <form id="form" onsubmit="handleFormSubmit(event)">
+      <div class="full-link-wrapper">
+        <label for="full-link">Shorten a long link</label>
+        <input
+          name="full-link"
+          type="text"
+          placeholder="Enter your long link here"
+        />
+      </div>
+      <div class="shortened-link-wrapper">
+        <input
+          name="shortened-link"
+          type="text"
+          placeholder="Shortened link"
+          class="shortened-link"
+          onclick="copyShortenedLink()"
+          readonly
+        />
+        <button type="button" class="copy-button" onclick="copyShortenedLink()">
+          Copy Link
+        </button>
+      </div>
+      <button type="submit" class="submit-button">Shorten Link</button>
+      <p class="error"></p>
+    </form>
+  </body>
+</html>
