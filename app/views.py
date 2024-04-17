@@ -8,7 +8,7 @@ from flask import (
 import re
 
 from .utils import generate_short_link
-from . import redis
+from . import redis_store
 
 bp = Blueprint("api", __name__, template_folder="templates")
 
@@ -28,13 +28,13 @@ def shorten_link():
     elif re.match(r'^(?!https?://)', full_link) is not None:
         full_link = 'http://' + full_link
     short_link = generate_short_link(full_link)
-    redis.set(short_link, full_link)
+    redis_store.set(short_link, full_link)
     return jsonify({"short_link": "http://localhost:5000/" + short_link})
 
 
 @bp.route('/<short_link>')
 def redirect_to_url(short_link):
-    url = redis.get(short_link)
+    url = redis_store.get(short_link)
     if not url:
         return redirect('/', 307)
     return redirect(url.decode('utf-8'), 302)
