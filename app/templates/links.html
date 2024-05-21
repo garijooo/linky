@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Linky</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        font-family: "Roboto", sans-serif;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+        background-color: #fcba03;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        width: 80%;
+        max-width: 450px;
+        border-radius: 8px;
+        background-color: #fff;
+        padding: 24px;
+        gap: 16px;
+        box-shadow: 0 0 16px #bdac2a;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      label {
+        font-size: 28px;
+        font-weight: 400;
+      }
+
+      input {
+        font-size: 20px;
+        border-radius: 8px;
+        border: 1px solid #4d4d4d;
+        padding: 12px 16px;
+        outline-color: #595001;
+        flex-grow: 1;
+      }
+
+      .full-link-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .shortened-link-wrapper {
+        display: flex;
+        gap: 8px;
+      }
+
+      .shortened-link {
+        flex-grow: 1;
+        user-select: none;
+        cursor: pointer;
+      }
+
+      button {
+        padding: 12px;
+        font-size: 20px;
+        background-color: #595001;
+        color: #fff;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:active {
+        background-color: #696015;
+      }
+
+      .copy-button {
+        display: none;
+        width: 120px;
+      }
+
+      .error {
+        color: #a81414;
+        font-size: 16px;
+      }
+
+      .links {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .links__short {
+        background-color: transparent;
+        font-size: 16px;
+        color: #348ceb;
+      }
+
+      .links__short:hover {
+        color: #09509c;
+      }
+
+      .links__full {
+        background-color: transparent;
+        font-size: 14px;
+        color: #194b9c;
+      }
+
+      .links__full:hover {
+        color: #163e7d;
+      }
+
+      ul {
+        list-style: none;
+      }
+
+      .links_wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .link_actions__remove {
+        color: #e6202d;
+        background-color: transparent;
+        border: none;
+        font-size: 12px;
+      }
+
+      .link_actions__remove:active,
+      .link_actions__remove:hover {
+        background-color: transparent;
+      }
+    </style>
+    <script>
+      async function deleteLink(shortLink) {
+        try {
+          const response = await fetch("/link/" + shortLink, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          const result = await response.json();
+          if ("error" in result) {
+            throw new Error(result.error);
+          }
+          if (result.success) {
+            window.location.reload();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <form id="form">
+      {% if is_mine == True %}
+      <h1>My links</h1>
+      {% else %}
+      <h1>Links of user#{{ user_id }}</h1>
+      {% endif %}
+      <ul>
+        {%for u in urls%}
+        <li>
+          <div class="links_wrapper">
+            <div class="links">
+              <a class="links__short" href="/{{ u.short_link }}"
+                >{{ u.short_link }}</a
+              >
+              <a class="links__full" href="/{{ u.short_link }}"
+                >{{ u.full_link }}</a
+              >
+            </div>
+            {% if is_mine == True %}
+            <button
+              type="button"
+              class="link_actions__remove"
+              onclick="deleteLink('{{ u.short_link }}')"
+            >
+              Remove
+            </button>
+            {% else %}
+            <div />
+            {% endif %}
+          </div>
+        </li>
+        {%endfor%}
+      </ul>
+      <a class="links" href="/">Go back</a>
+    </form>
+  </body>
+</html>

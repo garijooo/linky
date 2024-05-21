@@ -28,17 +28,22 @@ class TestShortenLink:
 
 
     def test_duplicate_link_ok(self, client):
+        redis_store.flushdb()
         full_link = "example.com"
         init_data = {"fullLink": full_link}
 
         response = client.post("/shorten-link", json=init_data)
         data = json.loads(response.data.decode("utf-8"))
         short_link_1 = data["short_link"].split("/")[-1]
+        user_id_1 = data["user_id"]
+        client.set_cookie(key="userId", value=user_id_1)
 
         response = client.post("/shorten-link", json=init_data)
         data = json.loads(response.data.decode("utf-8"))
         short_link_2 = data["short_link"].split("/")[-1]
+        user_id_2 = data["user_id"]
 
+        assert user_id_1 == user_id_2
         assert short_link_1 == short_link_2
 
 
@@ -60,7 +65,40 @@ class TestShortenLink:
         assert data["error"] == "Please provide a valid link"
 
 
-class TestRedirectToUrl:
+class TestDeleteLink:
+    def test_ok(self, client):
+        redis_store.flushdb()
+        full_link = "example.com"
+        init_data = {"fullLink": full_link}
+
+        response = client.post("/shorten-link", json=init_data)
+        data = json.loads(response.data.decode("utf-8"))
+        short_link = data["short_link"].split("/")[-1]
+        user_id = data["user_id"]
+        client.set_cookie(key="userId", value=user_id)
+
+        response = client.delete("/link/" + short_link)
+        data = json.loads(response.data.decode("utf-8"))
+        assert not "error" in data
+        assert data["success"] is True
+
+
+    def test_auth_error(self, client):
+        redis_store.flushdb()
+        full_link = "example.com"
+        init_data = {"fullLink": full_link}
+
+        response = client.post("/shorten-link", json=init_data)
+        data = json.loads(response.data.decode("utf-8"))
+        short_link = data["short_link"].split("/")[-1]
+
+        response = client.delete("/link/" + short_link)
+        data = json.loads(response.data.decode("utf-8"))
+        assert "error" in data
+        assert data["error"] == "Authorization error"
+
+
+class TestRedirectToLink:
     def test_ok(self, client):
         full_link = "https://example.com"
         init_data = {"fullLink": full_link}

@@ -87,10 +87,53 @@
         color: #a81414;
         font-size: 16px;
       }
+
+      .my_links {
+        font-size: 20px;
+        color: #348ceb;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .my_links:hover,
+      .my_links:active {
+        color: #09509c;
+      }
     </style>
     <script>
+      function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+          const date = new Date();
+          date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+      }
+
+      function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) === " ") c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) === 0)
+            return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+
+      function redirectToLinks() {
+        const userId = getCookie("userId");
+        if (userId) {
+          const redirectTo = "/links/" + userId;
+          window.location.href = redirectTo;
+        }
+      }
+
       async function handleFormSubmit(e) {
         e.preventDefault();
+
         const errorElem = document.getElementsByClassName("error")[0];
         errorElem.innerText = "";
         const fullLink = event.target.elements["full-link"].value;
@@ -101,6 +144,7 @@
               "Content-Type": "application/json;charset=utf-8",
             },
             body: JSON.stringify({ fullLink }),
+            credentials: "include",
           });
 
           const result = await response.json();
@@ -111,7 +155,9 @@
             "[name='shortened-link']"
           );
           shortenedLinkElem.value = result.short_link;
-
+          if (result.user_id && !getCookie("userId")) {
+            setCookie("userId", result.user_id, 30);
+          }
           const copyButtonElem =
             document.getElementsByClassName("copy-button")[0];
           copyButtonElem.style.display = "block";
@@ -166,6 +212,7 @@
       </div>
       <button type="submit" class="submit-button">Shorten Link</button>
       <p class="error"></p>
+      <a class="my_links" onclick="redirectToLinks()">My links</a>
     </form>
   </body>
 </html>
