@@ -1,4 +1,5 @@
 import pytest
+import re
 import json
 from app import redis_store
 
@@ -96,6 +97,34 @@ class TestDeleteLink:
         data = json.loads(response.data.decode("utf-8"))
         assert "error" in data
         assert data["error"] == "Authorization error"
+
+
+class TestUserLinksPage:
+    def test_ok(self, client):
+        redis_store.flushdb()
+        full_links = ["https://google.com", "github.com", "http://example.com"]
+        user_id = None
+
+        for l in full_links:
+            init_data = {"fullLink": l}
+            if user_id is not None:
+                client.set_cookie(key="userId", value=user_id)
+
+            response = client.post("/shorten-link", json=init_data)
+            data = json.loads(response.data.decode("utf-8"))
+            user_id = data["user_id"]
+
+        response = client.get("/links/" + user_id)
+        text_data = response.get_data(as_text=True)
+        for l in full_links:
+            assert l in text_data  
+        matches = re.findall(r'<li>', text_data)
+        assert len(full_links) == len(matches)
+
+
+    def test_wrong_user_id_redirect(self, client):
+        response = client.get("/links/123567890")
+        assert response.status_code == 307
 
 
 class TestRedirectToLink:

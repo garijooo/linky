@@ -22,17 +22,19 @@ def index():
 def links(user_id):
     user_cookie_id = request.cookies.get("userId")
     user_key = f"user:{user_id}"
-    user_urls = redis_store.lrange(user_key, 0, -1)
-    urls = [{
-        "short_link": uu.decode("utf-8"),
-        "full_link": redis_store.get(uu.decode("utf-8")).decode("utf-8"),
-    } for uu in user_urls if redis_store.get(uu.decode("utf-8"))]
-    return render_template(
-        "links.html",
-        urls=urls,
-        user_id=user_id,
-        is_mine=user_cookie_id == user_id,
-    )
+    if redis_store.exists(user_key):
+        user_urls = redis_store.lrange(user_key, 0, -1)
+        urls = [{
+            "short_link": uu.decode("utf-8"),
+            "full_link": redis_store.get(uu.decode("utf-8")).decode("utf-8"),
+        } for uu in user_urls if redis_store.get(uu.decode("utf-8"))]
+        return render_template(
+            "links.html",
+            urls=urls,
+            user_id=user_id,
+            is_mine=user_cookie_id == user_id,
+        )
+    return redirect('/', 307)
 
 
 @bp.route("/shorten-link", methods = ["POST"])
